@@ -864,6 +864,7 @@ function saveState() {
                 exercises: S.s.exercises.map(ex => ({ name: ex.name, sets: [...ex.sets] })),
                 restMins: S.s.rest.mins,
             },
+            keepAwake: wakeState.enabled,
         }));
     } catch (_) {}
 }
@@ -896,12 +897,15 @@ function loadState() {
         if (d.s && (d.s.restMins === 2 || d.s.restMins === 3)) {
             S.s.rest.mins = d.s.restMins;
         }
+
+        if (d.keepAwake === true) wakeState.enabled = true;
     } catch (_) {}
 }
 
 /* ── Boot ───────────────────────────────────────────────────────────────────── */
 
 loadState();
+if (wakeState.enabled) setWakeLock(true);
 render(true);
 </script>
 </body>
