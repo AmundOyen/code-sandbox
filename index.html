@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4×4 Gym Tracker</title>
+    <style>
+        :root {
+            --bg:     #111;
+            --card:   #1c1c1e;
+            --card2:  #2c2c2e;
+            --border: #3a3a3c;
+            --text:   #f5f5f7;
+            --muted:  #8e8e93;
+            --blue:   #0a84ff;
+            --red:    #ff3b5c;
+            --green:  #30d158;
+            --orange: #ff9f0a;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100dvh;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* ── Header ──────────────────────────────────────────── */
+        .hdr {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 10;
+        }
+        .hdr h1 { font-size: 18px; font-weight: 700; flex: 1; }
+
+        .back {
+            background: none;
+            border: none;
+            color: var(--blue);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 6px 14px 6px 0;
+            touch-action: manipulation;
+        }
+
+        /* ── Home ────────────────────────────────────────────── */
+        .home { padding: 36px 16px; }
+        .home-title { font-size: 36px; font-weight: 800; margin-bottom: 6px; }
+        .home-sub   { color: var(--muted); font-size: 15px; margin-bottom: 40px; }
+
+        .mode-card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 14px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            user-select: none;
+            touch-action: manipulation;
+            transition: transform .12s, background .12s;
+        }
+        .mode-card:active { transform: scale(.97); background: var(--card2); }
+        .mode-card.cond { border-top: 3px solid var(--blue); }
+        .mode-card.str  { border-top: 3px solid var(--red); }
+        .mode-icon  { font-size: 30px; margin-bottom: 10px; }
+        .mode-title { font-size: 19px; font-weight: 700; margin-bottom: 5px; }
+        .mode-desc  { color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+        /* ── Condition ───────────────────────────────────────── */
+        .cond-screen { padding: 0 16px 56px; }
+
+        .phase-info { text-align: center; padding: 32px 0 10px; }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 14px;
+        }
+        .badge.warmup   { background: rgba(10,132,255,.18); color: var(--blue); }
+        .badge.interval { background: rgba(255,59,92,.18);  color: var(--red); }
+        .badge.pause    { background: rgba(48,209,88,.18);  color: var(--green); }
+        .badge.cooldown { background: rgba(255,159,10,.18); color: var(--orange); }
+        .badge.done     { background: rgba(48,209,88,.18);  color: var(--green); }
+
+        .phase-name { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+        .phase-sub  { color: var(--muted); font-size: 14px; }
+
+        .timer {
+            text-align: center;
+            font-size: 84px;
+            font-weight: 800;
+            letter-spacing: -3px;
+            font-variant-numeric: tabular-nums;
+            font-family: 'SF Mono', 'Courier New', monospace;
+            margin: 10px 0;
+            line-height: 1;
+        }
+
+        .pbar-wrap { height: 5px; background: var(--card2); border-radius: 3px; margin: 0 0 28px; overflow: hidden; }
+        .pbar { height: 100%; border-radius: 3px; transition: width 1s linear; }
+        .pbar.warmup   { background: var(--blue); }
+        .pbar.interval { background: var(--red); }
+        .pbar.pause    { background: var(--green); }
+        .pbar.cooldown { background: var(--orange); }
+
+        /* ── Buttons ─────────────────────────────────────────── */
+        .btns { display: flex; gap: 10px; margin-bottom: 28px; }
+
+        .btn {
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 15px 18px;
+            font-family: inherit;
+            user-select: none;
+            touch-action: manipulation;
+            transition: transform .1s;
+        }
+        .btn:active { transform: scale(.96); }
+
+        .btn-primary   { background: var(--blue);  color: #fff; flex: 1; }
+        .btn-secondary { background: var(--card2); color: var(--text); }
+        .btn-ghost     { background: rgba(255,59,92,.14); color: var(--red); }
+        .btn-green     { background: var(--green); color: #fff; flex: 1; }
+        .btn-full      { width: 100%; text-align: center; }
+
+        /* ── Phase list ──────────────────────────────────────── */
+        .phase-list {
+            background: var(--card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .pli {
+            display: flex;
+            align-items: center;
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .pli:last-child { border-bottom: none; }
+        .pli.active { background: var(--card2); }
+        .pli.past .pli-label { color: var(--muted); }
+
+        .dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            margin-right: 11px;
+            flex-shrink: 0;
+        }
+        .dot.warmup   { background: var(--blue); }
+        .dot.interval { background: var(--red); }
+        .dot.pause    { background: var(--green); }
+        .dot.cooldown { background: var(--orange); }
+        .dot.past     { background: var(--muted); opacity: .5; }
+
+        .pli-label { flex: 1; font-size: 13px; }
+        .pli-dur   { color: var(--muted); font-size: 12px; }
+
+        /* ── Strength ─────────────────────────────────────────── */
+        .str-screen { padding: 0 16px 56px; }
+
+        .ex-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 18px;
+            margin-top: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .ex-hdr {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .ex-num {
+            width: 30px;
+            height: 30px;
+            background: var(--red);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 15px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .ex-name {
+            flex: 1;
+            background: none;
+            border: none;
+            border-bottom: 1.5px solid transparent;
+            color: var(--text);
+            font-size: 16px;
+            font-weight: 700;
+            font-family: inherit;
+            outline: none;
+            transition: border-color .2s;
+            min-width: 0;
+        }
+        .ex-name:focus        { border-bottom-color: var(--blue); }
+        .ex-name::placeholder { color: var(--muted); font-weight: 400; }
+
+        .ex-count { color: var(--muted); font-size: 13px; white-space: nowrap; padding-left: 8px; }
+
+        .sets-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .set-btn {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            background: var(--card2);
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            user-select: none;
+            touch-action: manipulation;
+            transition: all .2s;
+        }
+        .set-btn.done {
+            background: rgba(48,209,88,.14);
+            border-color: var(--green);
+            color: var(--green);
+        }
+        .set-btn .ck  { font-size: 18px; line-height: 1; }
+        .set-btn .lbl { font-size: 10px; opacity: .7; }
+
+        /* ── Done banner ─────────────────────────────────────── */
+        .done-banner {
+            background: rgba(48,209,88,.08);
+            border: 1px solid rgba(48,209,88,.3);
+            border-radius: 16px;
+            padding: 22px;
+            text-align: center;
+            margin-top: 16px;
+        }
+        .done-title { font-size: 20px; font-weight: 800; color: var(--green); margin-bottom: 4px; }
+        .done-sub   { color: var(--muted); font-size: 13px; }
+
+        /* ── Rest timer overlay ──────────────────────────────── */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 50;
+            padding: 0 16px 32px;
+        }
+
+        .rest-card {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 28px;
+            width: 100%;
+            max-width: 468px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .rest-title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+        .rest-sub   { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+        .rest-timer {
+            font-size: 68px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            font-family: 'SF Mono', 'Courier New', monospace;
+            letter-spacing: -2px;
+            color: var(--green);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .rpbar-wrap { height: 4px; background: var(--card2); border-radius: 2px; margin-bottom: 22px; overflow: hidden; }
+        .rpbar { height: 100%; background: var(--green); border-radius: 2px; transition: width 1s linear; }
+
+        .dur-sel { display: flex; gap: 8px; margin-bottom: 16px; }
+
+        .dur-btn {
+            flex: 1;
+            padding: 13px;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            background: var(--card2);
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            user-select: none;
+            touch-action: manipulation;
+            transition: all .2s;
+        }
+        .dur-btn.sel {
+            border-color: var(--green);
+            background: rgba(48,209,88,.14);
+            color: var(--green);
+        }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+
+/* ── Audio ──────────────────────────────────────────────────────────────────── */
+
+function beep(freq, dur) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.frequency.value = freq || 880;
+        g.gain.setValueAtTime(0.3, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + (dur || 150) / 1000);
+        o.start();
+        o.stop(ctx.currentTime + (dur || 150) / 1000);
+    } catch (_) {}
+}
+
+function phaseBeep()    { beep(660, 200); setTimeout(() => beep(880, 200), 260); }
+function finishBeep()   { [660, 770, 880, 1100].forEach((f, i) => setTimeout(() => beep(f, 220), i * 230)); }
+function restDoneBeep() { beep(1100, 300); }
+
+/* ── Phases ─────────────────────────────────────────────────────────────────── */
+
+const PHASES = [
+    { label: 'Warm Up',      dur: 6 * 60, type: 'warmup'   },
+    { label: 'Interval',     dur: 4 * 60, type: 'interval', round: 1 },
+    { label: 'Active Pause', dur: 3 * 60, type: 'pause',    round: 1 },
+    { label: 'Interval',     dur: 4 * 60, type: 'interval', round: 2 },
+    { label: 'Active Pause', dur: 3 * 60, type: 'pause',    round: 2 },
+    { label: 'Interval',     dur: 4 * 60, type: 'interval', round: 3 },
+    { label: 'Active Pause', dur: 3 * 60, type: 'pause',    round: 3 },
+    { label: 'Interval',     dur: 4 * 60, type: 'interval', round: 4 },
+    { label: 'Active Pause', dur: 3 * 60, type: 'pause',    round: 4 },
+    { label: 'Cool Down',    dur: 3 * 60, type: 'cooldown'  },
+];
+
+/* ── State ──────────────────────────────────────────────────────────────────── */
+
+const S = {
+    screen: 'home',
+
+    c: {
+        idx: 0,
+        left: PHASES[0].dur,
+        running: false,
+        iv: null,
+        done: false,
+    },
+
+    s: {
+        exercises: mkExercises(),
+        rest: mkRest(),
+    },
+};
+
+function mkExercises() {
+    return Array.from({ length: 4 }, (_, i) => ({
+        name: `Exercise ${i + 1}`,
+        sets: [false, false, false, false],
+    }));
+}
+
+function mkRest() {
+    return { visible: false, mins: 2, left: 120, total: 120, running: false, iv: null };
+}
+
+/* ── Utilities ──────────────────────────────────────────────────────────────── */
+
+function fmt(s) {
+    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function esc(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function badgeText(type) {
+    return { warmup: 'Warm Up', interval: 'Interval', pause: 'Rest', cooldown: 'Cool Down' }[type] || type;
+}
+
+/* ── Render ─────────────────────────────────────────────────────────────────── */
+
+function render(noFocusRestore) {
+    const app = document.getElementById('app');
+
+    // Capture focused exercise-name input before wiping DOM
+    const ae = document.activeElement;
+    const focusIdx = ae && ae.dataset && ae.dataset.idx != null ? ae.dataset.idx : null;
+    const focusSel = focusIdx != null && typeof ae.selectionStart === 'number'
+        ? [ae.selectionStart, ae.selectionEnd] : null;
+
+    if (S.screen === 'home') {
+        app.innerHTML = renderHome();
+    } else if (S.screen === 'condition') {
+        app.innerHTML = renderCondition();
+    } else if (S.screen === 'strength') {
+        app.innerHTML = renderStrength();
+
+        // Wire name inputs — update state on keystroke without re-rendering
+        app.querySelectorAll('.ex-name').forEach(inp => {
+            inp.addEventListener('input', e => {
+                S.s.exercises[+e.target.dataset.idx].name = e.target.value;
+            });
+        });
+
+        // Restore focus to the same name input if the user was typing
+        if (!noFocusRestore && focusIdx != null) {
+            const el = app.querySelector(`[data-idx="${focusIdx}"]`);
+            if (el) {
+                el.focus();
+                if (focusSel) el.setSelectionRange(...focusSel);
+            }
+        }
+    }
+}
+
+/* ── Home ───────────────────────────────────────────────────────────────────── */
+
+function renderHome() {
+    return `
+    <div class="home">
+        <div class="home-title">4×4 Gym Tracker</div>
+        <div class="home-sub">Choose your training type</div>
+
+        <div class="mode-card cond" onclick="nav('condition')">
+            <div class="mode-icon">🏃</div>
+            <div class="mode-title">Condition Training</div>
+            <div class="mode-desc">
+                6 min warm-up &nbsp;·&nbsp;
+                4 × (4 min interval + 3 min pause) &nbsp;·&nbsp;
+                3 min cool-down<br>
+                Total: 37 minutes
+            </div>
+        </div>
+
+        <div class="mode-card str" onclick="nav('strength')">
+            <div class="mode-icon">🏋️</div>
+            <div class="mode-title">Strength Training</div>
+            <div class="mode-desc">4 exercises &nbsp;·&nbsp; 4 sets each &nbsp;·&nbsp; 2 or 3 min rest timer</div>
+        </div>
+    </div>`;
+}
+
+/* ── Condition Training ─────────────────────────────────────────────────────── */
+
+function renderCondition() {
+    const c = S.c;
+    if (c.done) return renderConditionDone();
+
+    const ph  = PHASES[c.idx];
+    const pct = ((ph.dur - c.left) / ph.dur) * 100;
+    const name = ph.round ? `${ph.label} ${ph.round}` : ph.label;
+    const btnLabel = c.running ? 'Pause' : (c.left < ph.dur ? 'Resume' : 'Start');
+
+    const phaseList = PHASES.map((p, i) => {
+        const past   = i < c.idx;
+        const active = i === c.idx;
+        const n = p.round ? `${p.label} ${p.round}` : p.label;
+        return `
+        <div class="pli ${active ? 'active' : ''} ${past ? 'past' : ''}">
+            <div class="dot ${past ? 'past' : p.type}"></div>
+            <span class="pli-label">${n}</span>
+            <span class="pli-dur">${p.dur / 60} min</span>
+        </div>`;
+    }).join('');
+
+    return `
+    <div class="hdr">
+        <button class="back" onclick="navHome()">← Back</button>
+        <h1>Condition Training</h1>
+    </div>
+    <div class="cond-screen">
+        <div class="phase-info">
+            <div class="badge ${ph.type}">${badgeText(ph.type)}</div>
+            <div class="phase-name">${name}</div>
+            <div class="phase-sub">Phase ${c.idx + 1} of ${PHASES.length}</div>
+        </div>
+        <div class="timer">${fmt(c.left)}</div>
+        <div class="pbar-wrap">
+            <div class="pbar ${ph.type}" style="width:${pct}%"></div>
+        </div>
+        <div class="btns">
+            <button class="btn btn-primary" onclick="toggleCond()">${btnLabel}</button>
+            <button class="btn btn-secondary" onclick="skipCond()">Skip</button>
+            <button class="btn btn-ghost" onclick="resetCond()">Reset</button>
+        </div>
+        <div class="phase-list">${phaseList}</div>
+    </div>`;
+}
+
+function renderConditionDone() {
+    const phaseList = PHASES.map(p => {
+        const n = p.round ? `${p.label} ${p.round}` : p.label;
+        return `
+        <div class="pli past">
+            <div class="dot past"></div>
+            <span class="pli-label">${n}</span>
+            <span class="pli-dur">${p.dur / 60} min</span>
+        </div>`;
+    }).join('');
+
+    return `
+    <div class="hdr">
+        <button class="back" onclick="navHome()">← Back</button>
+        <h1>Condition Training</h1>
+    </div>
+    <div class="cond-screen">
+        <div class="phase-info">
+            <div class="badge done">Done</div>
+            <div class="phase-name">Workout Complete!</div>
+            <div class="phase-sub">37 minutes · Great work</div>
+        </div>
+        <div class="timer" style="color:var(--green)">00:00</div>
+        <div class="btns">
+            <button class="btn btn-primary" onclick="resetCond()">Start Again</button>
+        </div>
+        <div class="phase-list">${phaseList}</div>
+    </div>`;
+}
+
+/* ── Strength Training ──────────────────────────────────────────────────────── */
+
+function renderStrength() {
+    const { exercises, rest } = S.s;
+    const allDone = exercises.every(ex => ex.sets.every(Boolean));
+
+    const cards = exercises.map((ex, ei) => {
+        const doneCount = ex.sets.filter(Boolean).length;
+        const sets = ex.sets.map((done, si) => `
+            <button class="set-btn ${done ? 'done' : ''}" onclick="toggleSet(${ei},${si})">
+                ${done ? '<span class="ck">✓</span>' : ''}
+                <span class="lbl">Set ${si + 1}</span>
+            </button>`).join('');
+
+        return `
+        <div class="ex-card">
+            <div class="ex-hdr">
+                <div class="ex-num">${ei + 1}</div>
+                <input
+                    class="ex-name"
+                    type="text"
+                    value="${esc(ex.name)}"
+                    data-idx="${ei}"
+                    placeholder="Exercise name"
+                >
+                <span class="ex-count">${doneCount}/4</span>
+            </div>
+            <div class="sets-grid">${sets}</div>
+        </div>`;
+    }).join('');
+
+    const doneBanner = allDone ? `
+        <div class="done-banner">
+            <div class="done-title">Workout Complete!</div>
+            <div class="done-sub">All 4 exercises · 16 sets done</div>
+        </div>` : '';
+
+    const restOverlay = rest.visible ? renderRestOverlay() : '';
+
+    return `
+    <div class="hdr">
+        <button class="back" onclick="navHome()">← Back</button>
+        <h1>Strength Training</h1>
+    </div>
+    <div class="str-screen">
+        ${cards}
+        ${doneBanner}
+        <div style="margin-top:16px">
+            <button class="btn btn-secondary btn-full" onclick="resetStr()">Reset All</button>
+        </div>
+    </div>
+    ${restOverlay}`;
+}
+
+function renderRestOverlay() {
+    const r = S.s.rest;
+    const pct = r.total > 0 ? ((r.total - r.left) / r.total) * 100 : 0;
+    const btnLabel = r.running ? 'Pause' : (r.left < r.total ? 'Resume' : 'Start');
+
+    return `
+    <div class="overlay">
+        <div class="rest-card">
+            <div class="rest-title">Rest Timer</div>
+            <div class="rest-sub">Recover before the next set</div>
+            <div class="rest-timer">${fmt(r.left)}</div>
+            <div class="rpbar-wrap">
+                <div class="rpbar" style="width:${pct}%"></div>
+            </div>
+            <div class="dur-sel">
+                <button class="dur-btn ${r.mins === 2 ? 'sel' : ''}" onclick="setRestDur(2)">2 min</button>
+                <button class="dur-btn ${r.mins === 3 ? 'sel' : ''}" onclick="setRestDur(3)">3 min</button>
+            </div>
+            <div class="btns" style="margin-bottom:0">
+                <button class="btn btn-green" onclick="toggleRest()">${btnLabel}</button>
+                <button class="btn btn-secondary" onclick="closeRest()">Skip</button>
+            </div>
+        </div>
+    </div>`;
+}
+
+/* ── Navigation ─────────────────────────────────────────────────────────────── */
+
+function nav(screen) {
+    S.screen = screen;
+    render(true);
+}
+
+function navHome() {
+    stopCondTimer();
+    stopRestTimer();
+    S.screen = 'home';
+    render(true);
+}
+
+/* ── Condition actions ──────────────────────────────────────────────────────── */
+
+function toggleCond() {
+    const c = S.c;
+    if (c.running) {
+        stopCondTimer();
+    } else {
+        c.running = true;
+        c.iv = setInterval(tickCond, 1000);
+    }
+    render();
+}
+
+function tickCond() {
+    const c = S.c;
+    c.left--;
+    if (c.left <= 0) {
+        if (c.idx < PHASES.length - 1) {
+            c.idx++;
+            c.left = PHASES[c.idx].dur;
+            phaseBeep();
+        } else {
+            stopCondTimer();
+            c.done = true;
+            finishBeep();
+        }
+    }
+    render();
+}
+
+function skipCond() {
+    const c = S.c;
+    const wasRunning = c.running;
+    stopCondTimer();
+    if (c.idx < PHASES.length - 1) {
+        c.idx++;
+        c.left = PHASES[c.idx].dur;
+        phaseBeep();
+        if (wasRunning) {
+            c.running = true;
+            c.iv = setInterval(tickCond, 1000);
+        }
+    } else {
+        c.done = true;
+        finishBeep();
+    }
+    render();
+}
+
+function resetCond() {
+    stopCondTimer();
+    Object.assign(S.c, { idx: 0, left: PHASES[0].dur, running: false, iv: null, done: false });
+    render();
+}
+
+function stopCondTimer() {
+    if (S.c.iv) { clearInterval(S.c.iv); S.c.iv = null; }
+    S.c.running = false;
+}
+
+/* ── Strength actions ───────────────────────────────────────────────────────── */
+
+function toggleSet(ei, si) {
+    const ex = S.s.exercises[ei];
+    const wasDone = ex.sets[si];
+    ex.sets[si] = !ex.sets[si];
+
+    if (!wasDone) {
+        // Completed a set — show rest timer
+        stopRestTimer();
+        S.s.rest = { visible: true, mins: 2, left: 120, total: 120, running: false, iv: null };
+    }
+
+    render();
+}
+
+function setRestDur(mins) {
+    const r = S.s.rest;
+    if (r.running) return;
+    const secs = mins * 60;
+    Object.assign(r, { mins, left: secs, total: secs });
+    render();
+}
+
+function toggleRest() {
+    const r = S.s.rest;
+    if (r.running) {
+        stopRestTimer();
+    } else {
+        r.running = true;
+        r.iv = setInterval(tickRest, 1000);
+    }
+    render();
+}
+
+function tickRest() {
+    const r = S.s.rest;
+    r.left--;
+    if (r.left <= 0) {
+        stopRestTimer();
+        r.visible = false;
+        restDoneBeep();
+    }
+    render();
+}
+
+function closeRest() {
+    stopRestTimer();
+    S.s.rest.visible = false;
+    render();
+}
+
+function resetStr() {
+    stopRestTimer();
+    S.s.exercises.forEach(ex => { ex.sets = [false, false, false, false]; });
+    S.s.rest = mkRest();
+    render();
+}
+
+function stopRestTimer() {
+    const r = S.s.rest;
+    if (r.iv) { clearInterval(r.iv); r.iv = null; }
+    r.running = false;
+}
+
+/* ── Boot ───────────────────────────────────────────────────────────────────── */
+
+render(true);
+</script>
+</body>
+</html>
