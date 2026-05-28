@@ -433,11 +433,12 @@ function mkExercises() {
     return Array.from({ length: 4 }, (_, i) => ({
         name: `Exercise ${i + 1}`,
         sets: [false, false, false, false],
+        restMins: 2,
     }));
 }
 
 function mkRest() {
-    return { visible: false, mins: 2, left: 120, total: 120, running: false, iv: null };
+    return { visible: false, mins: 2, left: 120, total: 120, running: false, iv: null, exerciseIdx: -1 };
 }
 
 /* ── Utilities ──────────────────────────────────────────────────────────────── */
@@ -777,9 +778,11 @@ function toggleSet(ei, si) {
     ex.sets[si] = !ex.sets[si];
 
     if (!wasDone) {
-        // Completed a set — show rest timer
+        // Completed a set — show rest timer seeded with this exercise's saved duration
         stopRestTimer();
-        S.s.rest = { visible: true, mins: 2, left: 120, total: 120, running: false, iv: null };
+        const mins = ex.restMins || 2;
+        const secs = mins * 60;
+        S.s.rest = { visible: true, mins, left: secs, total: secs, running: false, iv: null, exerciseIdx: ei };
     }
 
     render();
@@ -790,6 +793,8 @@ function setRestDur(mins) {
     if (r.running) return;
     const secs = mins * 60;
     Object.assign(r, { mins, left: secs, total: secs });
+    // Persist the choice on the exercise so it's pre-selected next time
+    if (r.exerciseIdx >= 0) S.s.exercises[r.exerciseIdx].restMins = mins;
     render();
 }
 
@@ -871,7 +876,7 @@ function saveState() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
             c: { idx: S.c.idx, left: S.c.left, done: S.c.done },
             s: {
-                exercises: S.s.exercises.map(ex => ({ name: ex.name, sets: [...ex.sets] })),
+                exercises: S.s.exercises.map(ex => ({ name: ex.name, sets: [...ex.sets], restMins: ex.restMins })),
                 restMins: S.s.rest.mins,
             },
             keepAwake: wakeState.enabled,
@@ -901,6 +906,7 @@ function loadState() {
                 if (Array.isArray(ex.sets)) {
                     ex.sets.forEach((v, j) => { if (j < 4) S.s.exercises[i].sets[j] = Boolean(v); });
                 }
+                if (ex.restMins === 2 || ex.restMins === 3) S.s.exercises[i].restMins = ex.restMins;
             });
         }
 
