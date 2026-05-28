@@ -455,6 +455,8 @@ function render(noFocusRestore) {
             }
         }
     }
+
+    saveState();
 }
 
 /* ── Home ───────────────────────────────────────────────────────────────────── */
@@ -780,8 +782,56 @@ function stopRestTimer() {
     r.running = false;
 }
 
+/* ── Persistence ────────────────────────────────────────────────────────────── */
+
+const STORAGE_KEY = '4x4-gym-tracker-v1';
+
+function saveState() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            c: { idx: S.c.idx, left: S.c.left, done: S.c.done },
+            s: {
+                exercises: S.s.exercises.map(ex => ({ name: ex.name, sets: [...ex.sets] })),
+                restMins: S.s.rest.mins,
+            },
+        }));
+    } catch (_) {}
+}
+
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const d = JSON.parse(raw);
+
+        if (d.c) {
+            const idx = +d.c.idx;
+            if (idx >= 0 && idx < PHASES.length) {
+                S.c.idx  = idx;
+                S.c.left = typeof d.c.left === 'number' ? Math.max(0, d.c.left) : PHASES[idx].dur;
+                S.c.done = Boolean(d.c.done);
+            }
+        }
+
+        if (d.s && Array.isArray(d.s.exercises)) {
+            d.s.exercises.forEach((ex, i) => {
+                if (i >= S.s.exercises.length) return;
+                if (typeof ex.name === 'string') S.s.exercises[i].name = ex.name;
+                if (Array.isArray(ex.sets)) {
+                    ex.sets.forEach((v, j) => { if (j < 4) S.s.exercises[i].sets[j] = Boolean(v); });
+                }
+            });
+        }
+
+        if (d.s && (d.s.restMins === 2 || d.s.restMins === 3)) {
+            S.s.rest.mins = d.s.restMins;
+        }
+    } catch (_) {}
+}
+
 /* ── Boot ───────────────────────────────────────────────────────────────────── */
 
+loadState();
 render(true);
 </script>
 </body>
