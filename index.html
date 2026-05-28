@@ -75,6 +75,43 @@
         .mode-title { font-size: 19px; font-weight: 700; margin-bottom: 5px; }
         .mode-desc  { color: var(--muted); font-size: 13px; line-height: 1.6; }
 
+        /* ── Wake-lock toggle ───────────────────────────────── */
+        .wake-toggle {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+        .wake-toggle input { display: none; }
+
+        .wake-track {
+            position: relative;
+            width: 42px;
+            height: 25px;
+            background: var(--card2);
+            border-radius: 13px;
+            transition: background .22s;
+            flex-shrink: 0;
+        }
+        .wake-thumb {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 19px;
+            height: 19px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform .22s;
+            pointer-events: none;
+        }
+        .wake-toggle input:checked ~ .wake-track { background: var(--green); }
+        .wake-toggle input:checked ~ .wake-track .wake-thumb { transform: translateX(17px); }
+
+        .wake-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
         /* ── Condition ───────────────────────────────────────── */
         .cond-screen { padding: 0 16px 56px; }
 
@@ -606,6 +643,11 @@ function renderStrength() {
     <div class="hdr">
         <button class="back" onclick="navHome()">← Back</button>
         <h1>Strength Training</h1>
+        <label class="wake-toggle" title="Keep screen awake">
+            <input type="checkbox" id="wake-check" onchange="setWakeLock(this.checked)"${wakeState.enabled ? ' checked' : ''}>
+            <span class="wake-track"><span class="wake-thumb"></span></span>
+            <span class="wake-label">Keep Awake</span>
+        </label>
     </div>
     <div class="str-screen">
         ${cards}
@@ -781,6 +823,34 @@ function stopRestTimer() {
     if (r.iv) { clearInterval(r.iv); r.iv = null; }
     r.running = false;
 }
+
+/* ── Wake Lock ──────────────────────────────────────────────────────────────── */
+
+const wakeState = { enabled: false, lock: null };
+
+async function setWakeLock(enable) {
+    wakeState.enabled = enable;
+    if (enable) {
+        try {
+            wakeState.lock = await navigator.wakeLock.request('screen');
+            wakeState.lock.addEventListener('release', () => {
+                wakeState.lock = null;
+                if (wakeState.enabled && !document.hidden) setWakeLock(true);
+            });
+        } catch (_) {
+            wakeState.enabled = false;
+            const cb = document.getElementById('wake-check');
+            if (cb) cb.checked = false;
+        }
+    } else if (wakeState.lock) {
+        await wakeState.lock.release();
+        wakeState.lock = null;
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && wakeState.enabled && !wakeState.lock) setWakeLock(true);
+});
 
 /* ── Persistence ────────────────────────────────────────────────────────────── */
 
