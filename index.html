@@ -550,6 +550,11 @@ function renderCondition() {
     <div class="hdr">
         <button class="back" onclick="navHome()">← Back</button>
         <h1>Condition Training</h1>
+        <label class="wake-toggle" title="Keep screen awake">
+            <input type="checkbox" id="wake-check" onchange="setWakeLock(this.checked)"${wakeState.enabled ? ' checked' : ''}>
+            <span class="wake-track"><span class="wake-thumb"></span></span>
+            <span class="wake-label">Keep Awake</span>
+        </label>
     </div>
     <div class="cond-screen">
         <div class="phase-info">
@@ -585,6 +590,11 @@ function renderConditionDone() {
     <div class="hdr">
         <button class="back" onclick="navHome()">← Back</button>
         <h1>Condition Training</h1>
+        <label class="wake-toggle" title="Keep screen awake">
+            <input type="checkbox" id="wake-check" onchange="setWakeLock(this.checked)"${wakeState.enabled ? ' checked' : ''}>
+            <span class="wake-track"><span class="wake-thumb"></span></span>
+            <span class="wake-label">Keep Awake</span>
+        </label>
     </div>
     <div class="cond-screen">
         <div class="phase-info">
