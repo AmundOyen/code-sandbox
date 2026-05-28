@@ -1,13 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#111111"/>
-  <!-- left weight -->
-  <rect x="52"  y="176" width="72" height="160" rx="20" fill="#ff3b5c"/>
-  <!-- left collar -->
-  <rect x="116" y="208" width="36" height="96"  rx="10" fill="#ff3b5c"/>
-  <!-- bar -->
-  <rect x="148" y="232" width="216" height="48" rx="8"  fill="#ff3b5c"/>
-  <!-- right collar -->
-  <rect x="360" y="208" width="36" height="96"  rx="10" fill="#ff3b5c"/>
-  <!-- right weight -->
-  <rect x="388" y="176" width="72" height="160" rx="20" fill="#ff3b5c"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="20" fill="#111111"/>
+  <text y=".9em" font-size="90">🏋️</text>
 </svg>
