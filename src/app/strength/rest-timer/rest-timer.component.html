@@ -1,0 +1,32 @@
+<div class="overlay">
+  <div class="rest-card">
+    <div class="rest-title">Rest Timer</div>
+    <div class="rest-sub">Recover before the next set</div>
+
+    <div class="rest-timer">{{ fmt(r.left) }}</div>
+
+    <mat-progress-bar
+      class="rest-bar"
+      mode="determinate"
+      [value]="progress"
+    ></mat-progress-bar>
+
+    <div class="dur-sel">
+      <button
+        mat-stroked-button
+        [class.selected]="r.mins === 2"
+        (click)="setDuration(2)"
+      >2 min</button>
+      <button
+        mat-stroked-button
+        [class.selected]="r.mins === 3"
+        (click)="setDuration(3)"
+      >3 min</button>
+    </div>
+
+    <div class="controls">
+      <button mat-flat-button class="btn-start" (click)="toggle()">{{ btnLabel }}</button>
+      <button mat-stroked-button (click)="close()">Skip</button>
+    </div>
+  </div>
+</div>

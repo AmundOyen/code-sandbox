@@ -1,0 +1,51 @@
+.home {
+  padding: 36px 16px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.home-title {
+  font-size: 36px;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+
+.home-sub {
+  color: var(--muted);
+  font-size: 15px;
+  margin: 0 0 40px;
+}
+
+.mode-card {
+  margin-bottom: 14px;
+  cursor: pointer;
+  border-radius: 18px !important;
+  border: 1px solid var(--border);
+  background: var(--card) !important;
+  transition: background 0.12s;
+
+  mat-card-content {
+    padding: 24px !important;
+  }
+
+  &.cond { border-top: 3px solid var(--blue); }
+  &.str  { border-top: 3px solid var(--red); }
+}
+
+.mode-icon {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.mode-title {
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: var(--text);
+}
+
+.mode-desc {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}

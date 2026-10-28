@@ -1,0 +1,19 @@
+{
+  "name": "4×4 Gym Tracker",
+  "short_name": "4×4 Gym",
+  "description": "Track your 4×4 condition and strength workouts",
+  "theme_color": "#0a0a0f",
+  "background_color": "#0a0a0f",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

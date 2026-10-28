@@ -1,0 +1,58 @@
+<mat-toolbar class="toolbar">
+  <button mat-button class="back-btn" (click)="goBack()">
+    <mat-icon>arrow_back_ios</mat-icon> Back
+  </button>
+  <span class="toolbar-title">Strength Training</span>
+  <mat-slide-toggle
+    class="wake-toggle"
+    [checked]="wakeLock.enabled()"
+    (change)="onWakeToggle($event.checked)"
+  >Keep Awake</mat-slide-toggle>
+</mat-toolbar>
+
+<div class="screen">
+  @for (ex of exercises; track trackByIndex($index); let i = $index) {
+    <mat-card class="ex-card">
+      <mat-card-content>
+        <div class="ex-hdr">
+          <div class="ex-num">{{ i + 1 }}</div>
+          <input
+            class="ex-name"
+            type="text"
+            [value]="ex.name"
+            placeholder="Exercise name"
+            (input)="updateName(i, $any($event.target).value)"
+          />
+          <span class="ex-count">{{ ex.sets | doneCount }}/4</span>
+        </div>
+        <div class="sets-grid">
+          @for (done of ex.sets; track $index; let si = $index) {
+            <button
+              class="set-btn"
+              [class.done]="done"
+              (click)="state.toggleSet(i, si)"
+            >
+              @if (done) { <span class="ck">✓</span> }
+              <span class="lbl">Set {{ si + 1 }}</span>
+            </button>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (allDone) {
+    <div class="done-banner">
+      <div class="done-title">Workout Complete!</div>
+      <div class="done-sub">All 4 exercises · 16 sets done</div>
+    </div>
+  }
+
+  <div class="reset-wrap">
+    <button mat-stroked-button class="reset-btn" (click)="state.resetStrength()">Reset All</button>
+  </div>
+</div>
+
+@if (restTimer.visible) {
+  <app-rest-timer></app-rest-timer>
+}

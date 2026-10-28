@@ -1,0 +1,49 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$blue-palette,
+    tertiary: mat.$green-palette,
+  ),
+  typography: (
+    brand-family: 'Inter, system-ui, sans-serif',
+    plain-family: 'Inter, system-ui, sans-serif',
+  ),
+));
+
+html {
+  @include mat.all-component-themes($dark-theme);
+}
+
+:root {
+  --bg:     #0a0a0f;
+  --card:   #15151e;
+  --card2:  #1c1c28;
+  --border: #2a2a3a;
+  --text:   #e8e8f0;
+  --muted:  #7070a0;
+  --blue:   #0a84ff;
+  --red:    #ff453a;
+  --green:  #30d158;
+  --orange: #ff9f0a;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body { margin: 0; }
+
+/* Material overrides */
+.mat-mdc-card { --mdc-elevated-card-container-color: var(--card); }
+.mat-mdc-slide-toggle { --mdc-switch-selected-track-color: var(--blue); }
+.mat-mdc-progress-bar { --mdc-linear-progress-track-color: var(--border); }
