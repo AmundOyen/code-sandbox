@@ -1,0 +1,23 @@
+<div class="home">
+  <h1 class="home-title">4×4 Gym Tracker</h1>
+  <p class="home-sub">Choose your training type</p>
+
+  <mat-card class="mode-card cond" matRipple (click)="go('condition')">
+    <mat-card-content>
+      <div class="mode-icon">🏃</div>
+      <div class="mode-title">Condition Training</div>
+      <div class="mode-desc">
+        6 min warm-up &nbsp;·&nbsp; 4 × (4 min interval + 3 min pause) &nbsp;·&nbsp; 3 min cool-down<br>
+        Total: 34 minutes
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="mode-card str" matRipple (click)="go('strength')">
+    <mat-card-content>
+      <div class="mode-icon">🏋️</div>
+      <div class="mode-title">Strength Training</div>
+      <div class="mode-desc">4 exercises &nbsp;·&nbsp; 4 sets each &nbsp;·&nbsp; 2 or 3 min rest timer</div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,151 @@
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg) !important;
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+  gap: 4px;
+
+  .toolbar-title {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .back-btn {
+    color: var(--blue);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    mat-icon { font-size: 18px; }
+  }
+
+  .wake-toggle {
+    font-size: 12px;
+    ::ng-deep .mdc-label { font-size: 12px; color: var(--muted); }
+  }
+}
+
+.screen {
+  padding: 0 16px 56px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.phase-info {
+  text-align: center;
+  padding: 32px 0 10px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 14px;
+
+  &.warmup   { background: rgba(10,132,255,.18); color: var(--blue); }
+  &.interval { background: rgba(255,59,92,.18);  color: var(--red); }
+  &.pause    { background: rgba(48,209,88,.18);  color: var(--green); }
+  &.cooldown { background: rgba(255,159,10,.18); color: var(--orange); }
+  &.done     { background: rgba(48,209,88,.18);  color: var(--green); }
+}
+
+.phase-name {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.phase-sub {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.timer {
+  text-align: center;
+  font-size: 84px;
+  font-weight: 800;
+  letter-spacing: -3px;
+  font-variant-numeric: tabular-nums;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  margin: 10px 0;
+  line-height: 1;
+
+  &.green { color: var(--green); }
+}
+
+.phase-bar {
+  margin-bottom: 28px;
+  border-radius: 3px;
+  height: 5px;
+
+  &.warmup   { --mdc-linear-progress-active-indicator-color: var(--blue); }
+  &.interval { --mdc-linear-progress-active-indicator-color: var(--red); }
+  &.pause    { --mdc-linear-progress-active-indicator-color: var(--green); }
+  &.cooldown { --mdc-linear-progress-active-indicator-color: var(--orange); }
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 28px;
+
+  .btn-primary {
+    flex: 1;
+    background: var(--blue);
+    color: #fff;
+  }
+
+  .btn-reset {
+    color: var(--red);
+    background: rgba(255,59,92,.14);
+  }
+}
+
+.phase-list {
+  background: var(--card);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.pli {
+  display: flex;
+  align-items: center;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+
+  &:last-child { border-bottom: none; }
+  &.active { background: var(--card2); }
+  &.past .pli-label { color: var(--muted); }
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 11px;
+  flex-shrink: 0;
+
+  &.warmup   { background: var(--blue); }
+  &.interval { background: var(--red); }
+  &.pause    { background: var(--green); }
+  &.cooldown { background: var(--orange); }
+  &.past     { background: var(--muted); opacity: 0.5; }
+}
+
+.pli-label {
+  flex: 1;
+  font-size: 13px;
+}
+
+.pli-dur {
+  color: var(--muted);
+  font-size: 12px;
+}

@@ -1,0 +1,75 @@
+<mat-toolbar class="toolbar">
+  <button mat-button class="back-btn" (click)="goBack()">
+    <mat-icon>arrow_back_ios</mat-icon> Back
+  </button>
+  <span class="toolbar-title">Condition Training</span>
+  <mat-slide-toggle
+    class="wake-toggle"
+    [checked]="wakeLock.enabled()"
+    (change)="onWakeToggle($event.checked)"
+  >Keep Awake</mat-slide-toggle>
+</mat-toolbar>
+
+<!-- DONE STATE -->
+@if (state.conditionDone()) {
+  <div class="screen">
+    <div class="phase-info">
+      <span class="badge done">Done</span>
+      <div class="phase-name">Workout Complete!</div>
+      <div class="phase-sub">34 minutes · Great work</div>
+    </div>
+    <div class="timer green">00:00</div>
+    <div class="controls">
+      <button mat-flat-button class="btn-primary" (click)="state.resetCondition()">Start Again</button>
+    </div>
+    <div class="phase-list">
+      @for (p of phases; track p.label + p.round) {
+        <div class="pli past">
+          <span class="dot" [ngClass]="'past'"></span>
+          <span class="pli-label">{{ phaseDisplayName($index) }}</span>
+          <span class="pli-dur">{{ p.dur / 60 }} min</span>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- ACTIVE STATE -->
+@if (!state.conditionDone()) {
+  <div class="screen">
+    <div class="phase-info">
+      <span class="badge" [ngClass]="phase.type">{{ phase.type | phaseLabel }}</span>
+      <div class="phase-name">{{ phaseName }}</div>
+      <div class="phase-sub">Phase {{ state.conditionIdx() + 1 }} of {{ phases.length }}</div>
+    </div>
+
+    <div class="timer">{{ state.fmt(state.conditionLeft()) }}</div>
+
+    <mat-progress-bar
+      class="phase-bar"
+      [ngClass]="phase.type"
+      mode="determinate"
+      [value]="phaseProgress"
+    ></mat-progress-bar>
+
+    <div class="controls">
+      <button mat-flat-button class="btn-primary" (click)="state.toggleCondition()">
+        {{ btnLabel }}
+      </button>
+      <button mat-stroked-button (click)="state.skipCondition()">Skip</button>
+      <button mat-button class="btn-reset" (click)="state.resetCondition()">Reset</button>
+    </div>
+
+    <div class="phase-list">
+      @for (p of phases; track p.label + p.round; let i = $index) {
+        <div class="pli"
+          [class.active]="i === state.conditionIdx()"
+          [class.past]="i < state.conditionIdx()">
+          <span class="dot" [ngClass]="i < state.conditionIdx() ? 'past' : p.type"></span>
+          <span class="pli-label">{{ phaseDisplayName(i) }}</span>
+          <span class="pli-dur">{{ p.dur / 60 }} min</span>
+        </div>
+      }
+    </div>
+  </div>
+}
