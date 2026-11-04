@@ -20,6 +20,7 @@ export interface RestTimerState {
   total: number;
   running: boolean;
   exerciseIdx: number;
+  setIdx: number;
 }
 
 export interface StoredState {
@@ -52,5 +53,5 @@ export function defaultExercises(): Exercise[] {
 }
 
 export function defaultRestTimer(): RestTimerState {
-  return { visible: false, mins: 2, left: 120, total: 120, running: false, exerciseIdx: -1 };
+  return { visible: false, mins: 2, left: 120, total: 120, running: false, exerciseIdx: -1, setIdx: -1 };
 }

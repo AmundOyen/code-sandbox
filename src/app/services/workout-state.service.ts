@@ -8,11 +8,13 @@ import {
 } from '../models/workout.models';
 import { AudioService } from './audio.service';
 import { StorageService } from './storage.service';
+import { WakeLockService } from './wake-lock.service';
 
 @Injectable({ providedIn: 'root' })
 export class WorkoutStateService {
   private storage = inject(StorageService);
   private audio = inject(AudioService);
+  readonly wakeLock = inject(WakeLockService);
 
   // Condition training
   conditionIdx = signal(0);
@@ -29,16 +31,17 @@ export class WorkoutStateService {
   constructor() {
     this.loadFromStorage();
     effect(() => {
-      // Track all signals to persist on any change
       const c = {
         idx: this.conditionIdx(),
         left: this.conditionLeft(),
         done: this.conditionDone(),
       };
       const exs = this.exercises();
+      const keepAwake = this.wakeLock.enabled();
       this.storage.save({
         c,
         s: { exercises: exs.map(e => ({ name: e.name, sets: [...e.sets], restMins: e.restMins })) },
+        keepAwake,
       });
     });
   }
@@ -134,7 +137,7 @@ export class WorkoutStateService {
       this.stopRestTimer();
       const mins = ex.restMins ?? 2;
       const secs = mins * 60;
-      this.restTimer.set({ visible: true, mins, left: secs, total: secs, running: false, exerciseIdx });
+      this.restTimer.set({ visible: true, mins, left: secs, total: secs, running: false, exerciseIdx, setIdx });
     }
   }
 
@@ -215,6 +218,9 @@ export class WorkoutStateService {
           };
         })
       );
+    }
+    if (d.keepAwake) {
+      void this.wakeLock.set(true);
     }
   }
 }
