@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { FieldTree, FormField, FormRoot, applyEach, form, min, required, schema } from '@angular/forms/signals';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,25 +9,46 @@ import { MatSelectModule } from '@angular/material/select';
 import {
   ConditionWorkout,
   EXERCISE_TYPES,
+  ExerciseType,
   TreadmillSegment,
   ValueMode,
   WorkoutFormData,
   WorkoutFormResult,
   average,
   fmtNum,
-  toNum,
 } from '../../models/history.models';
 import { WorkoutDbService } from '../../services/workout-db.service';
+import { openConfirm } from '../../shared/confirm-dialog/confirm-dialog.component';
 
-type SegmentGroup = FormGroup<{
-  speed: FormControl<number | null>;
-  incline: FormControl<number | null>;
-}>;
+interface ConditionFormModel {
+  date: string;
+  exerciseType: ExerciseType;
+  mode: ValueMode;
+  intervals: TreadmillSegment[];
+  pauses: TreadmillSegment[];
+  durationMin: number | null;
+  note: string;
+}
+
+type SegmentKey = 'intervals' | 'pauses';
+
+/**
+ * Copies a segment field by field. Signal Forms tags array items with a hidden symbol key to
+ * track their identity, so spreading (`{ ...s }`) would copy that key and make rows share a field.
+ */
+function copySegment(s: TreadmillSegment): TreadmillSegment {
+  return { speed: s.speed, incline: s.incline };
+}
+
+const segmentSchema = schema<TreadmillSegment>(s => {
+  min(s.speed, 0);
+});
 
 @Component({
   selector: 'app-condition-form',
   imports: [
-    ReactiveFormsModule,
+    FormRoot,
+    FormField,
     MatDialogModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -39,90 +60,87 @@ type SegmentGroup = FormGroup<{
   styleUrl: '../workout-form.scss',
 })
 export class ConditionFormComponent {
-  private fb = inject(NonNullableFormBuilder);
   private db = inject(WorkoutDbService);
+  private dialog = inject(MatDialog);
   private dialogRef = inject<MatDialogRef<ConditionFormComponent, WorkoutFormResult<ConditionWorkout>>>(MatDialogRef);
   readonly data = inject<WorkoutFormData<ConditionWorkout>>(MAT_DIALOG_DATA);
 
   readonly exerciseTypes = EXERCISE_TYPES;
-  readonly fmtNum = fmtNum;
-  readonly saving = signal(false);
+  readonly sections: { key: SegmentKey; title: string; label: string }[] = [
+    { key: 'intervals', title: 'Intervals', label: 'Interval' },
+    { key: 'pauses', title: 'Active pauses', label: 'Pause' },
+  ];
 
-  readonly form = this.fb.group({
-    date: [this.data.workout.date, Validators.required],
-    exerciseType: [this.data.workout.exerciseType],
-    mode: [this.data.workout.mode as ValueMode],
-    intervals: this.fb.array(this.data.workout.intervals.map(s => this.segment(s))),
-    pauses: this.fb.array(this.data.workout.pauses.map(s => this.segment(s))),
-    durationMin: [
-      Math.round((this.data.workout.durationSec / 60) * 100) / 100,
-      [Validators.required, Validators.min(0)],
-    ],
-    note: [this.data.workout.note],
+  readonly model = signal<ConditionFormModel>({
+    date: this.data.workout.date,
+    exerciseType: this.data.workout.exerciseType,
+    mode: this.data.workout.mode,
+    intervals: this.data.workout.intervals.map(copySegment),
+    pauses: this.data.workout.pauses.map(copySegment),
+    durationMin: Math.round((this.data.workout.durationSec / 60) * 100) / 100,
+    note: this.data.workout.note,
   });
 
-  get perInterval(): boolean { return this.form.controls.mode.value === 'perInterval'; }
+  readonly form = form(
+    this.model,
+    f => {
+      required(f.date);
+      required(f.durationMin);
+      min(f.durationMin, 0);
+      applyEach(f.intervals, segmentSchema);
+      applyEach(f.pauses, segmentSchema);
+    },
+    { submission: { action: () => this.save() } },
+  );
 
-  /** Rows to show: every row in per-interval mode, only the first in whole-workout mode. */
-  rows(arr: FormArray<SegmentGroup>): SegmentGroup[] {
-    return this.perInterval ? arr.controls : arr.controls.slice(0, 1);
+  perInterval(): boolean {
+    return this.model().mode === 'perInterval';
   }
 
-  avg(arr: FormArray<SegmentGroup>, key: keyof TreadmillSegment): string {
-    return fmtNum(average(arr.controls.map(g => toNum(g.controls[key].value))));
+  /** Rows to show: every row in per-interval mode, only the first in whole-workout mode. */
+  rows(key: SegmentKey): FieldTree<TreadmillSegment>[] {
+    const all = this.model()[key].map((_, i) => this.form[key][i]);
+    return this.perInterval() ? all : all.slice(0, 1);
+  }
+
+  avg(key: SegmentKey, prop: keyof TreadmillSegment): string {
+    return fmtNum(average(this.model()[key].map(s => s[prop])));
   }
 
   onModeChange(mode: ValueMode): void {
+    if (mode !== 'perInterval') return;
     // Start every row from the single "whole workout" value instead of blanks.
-    if (mode === 'perInterval') {
-      for (const arr of [this.form.controls.intervals, this.form.controls.pauses]) {
-        const first = arr.at(0).getRawValue();
-        arr.controls.slice(1).forEach(g => {
-          if (g.controls.speed.value === null && g.controls.incline.value === null) g.setValue(first);
-        });
-      }
-    }
-  }
-
-  async save(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    const v = this.form.getRawValue();
-    const segs = (list: { speed: unknown; incline: unknown }[]): TreadmillSegment[] => {
-      const parsed = list.map(s => ({ speed: toNum(s.speed), incline: toNum(s.incline) }));
-      return v.mode === 'whole' ? parsed.map(() => ({ ...parsed[0] })) : parsed;
-    };
-    const workout: ConditionWorkout = {
-      ...this.data.workout,
-      date: v.date,
-      exerciseType: v.exerciseType,
-      mode: v.mode,
-      intervals: segs(v.intervals),
-      pauses: segs(v.pauses),
-      durationSec: Math.round(Number(v.durationMin) * 60),
-      note: v.note.trim(),
-    };
-    this.saving.set(true);
-    try {
-      await this.db.save(workout);
-      this.dialogRef.close(workout);
-    } finally {
-      this.saving.set(false);
-    }
+    const fill = (segs: TreadmillSegment[]) =>
+      segs.map((s, i) => (i > 0 && s.speed === null && s.incline === null ? copySegment(segs[0]) : s));
+    this.model.update(m => ({ ...m, intervals: fill(m.intervals), pauses: fill(m.pauses) }));
   }
 
   async remove(): Promise<void> {
-    if (!confirm('Delete this workout?')) return;
+    const ok = await openConfirm(this.dialog, {
+      title: 'Delete workout?',
+      message: 'This interval workout will be removed from your history.',
+      confirmLabel: 'Delete',
+    });
+    if (!ok) return;
     await this.db.remove(this.data.workout.id);
     this.dialogRef.close('deleted');
   }
 
-  private segment(s: TreadmillSegment): SegmentGroup {
-    return this.fb.group({
-      speed: this.fb.control<number | null>(s.speed, Validators.min(0)),
-      incline: this.fb.control<number | null>(s.incline),
-    });
+  private async save(): Promise<void> {
+    const m = this.model();
+    const segs = (list: TreadmillSegment[]) =>
+      m.mode === 'whole' ? list.map(() => copySegment(list[0])) : list.map(copySegment);
+    const workout: ConditionWorkout = {
+      ...this.data.workout,
+      date: m.date,
+      exerciseType: m.exerciseType,
+      mode: m.mode,
+      intervals: segs(m.intervals),
+      pauses: segs(m.pauses),
+      durationSec: Math.round((m.durationMin ?? 0) * 60),
+      note: m.note.trim(),
+    };
+    await this.db.save(workout);
+    this.dialogRef.close(workout);
   }
 }

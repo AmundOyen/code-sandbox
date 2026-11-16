@@ -1,34 +1,34 @@
 <h2 mat-dialog-title>{{ data.isNew ? 'Save strength workout' : 'Edit strength workout' }}</h2>
 
 <mat-dialog-content>
-  <form [formGroup]="form" id="strength-form" (ngSubmit)="save()">
+  <form [formRoot]="form" id="strength-form">
     <mat-form-field class="full">
       <mat-label>Date</mat-label>
-      <input matInput type="date" formControlName="date" required />
+      <input matInput type="date" [formField]="form.date" />
     </mat-form-field>
 
-    @for (g of form.controls.exercises.controls; track $index; let i = $index) {
-      <div class="card" [formGroup]="g">
+    @for (ex of exercises(); track $index; let i = $index) {
+      <div class="card">
         <mat-form-field class="full">
           <mat-label>Exercise {{ i + 1 }}</mat-label>
-          <input matInput formControlName="name" />
+          <input matInput [formField]="ex.name" />
         </mat-form-field>
 
         <mat-button-toggle-group
           class="mode"
-          formControlName="weightMode"
+          [formField]="ex.weightMode"
           aria-label="Weight entry"
-          (change)="onWeightModeChange(g, $event.value)"
+          (change)="onWeightModeChange(i, $event.value)"
         >
           <mat-button-toggle value="all">All sets</mat-button-toggle>
           <mat-button-toggle value="perSet">Per set</mat-button-toggle>
         </mat-button-toggle-group>
 
         <div class="row">
-          @for (c of weightRows(g); track $index) {
+          @for (w of weightRows(i); track $index) {
             <mat-form-field>
-              <mat-label>{{ g.controls.weightMode.value === 'perSet' ? 'Set ' + ($index + 1) : 'Weight' }}</mat-label>
-              <input matInput type="number" inputmode="decimal" min="0" step="0.5" [formControl]="c" />
+              <mat-label>{{ ex.weightMode().value() === 'perSet' ? 'Set ' + ($index + 1) : 'Weight' }}</mat-label>
+              <input matInput type="number" inputmode="decimal" step="0.5" [formField]="w" />
               <span matTextSuffix>kg</span>
             </mat-form-field>
           }
@@ -36,7 +36,7 @@
 
         <mat-form-field class="full">
           <mat-label>Note</mat-label>
-          <textarea matInput rows="2" formControlName="note"></textarea>
+          <textarea matInput rows="2" [formField]="ex.note"></textarea>
         </mat-form-field>
       </div>
     }
@@ -49,5 +49,5 @@
   }
   <span class="spacer"></span>
   <button mat-button type="button" mat-dialog-close>Cancel</button>
-  <button mat-flat-button type="submit" form="strength-form" [disabled]="saving()">Save</button>
+  <button mat-flat-button type="submit" form="strength-form" [disabled]="form().submitting()">Save</button>
 </mat-dialog-actions>

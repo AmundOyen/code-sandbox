@@ -81,13 +81,6 @@ export function average(values: (number | null)[]): number | null {
   return set.length ? set.reduce((sum, v) => sum + v, 0) / set.length : null;
 }
 
-/** Number inputs give null or a number; be defensive about empty strings too. */
-export function toNum(v: unknown): number | null {
-  if (v === null || v === undefined || v === '') return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
 export function fmtNum(v: number | null): string {
   return v === null ? '–' : String(Math.round(v * 10) / 10);
 }

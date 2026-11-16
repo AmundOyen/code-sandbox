@@ -1,15 +1,15 @@
 <h2 mat-dialog-title>{{ data.isNew ? 'Save interval workout' : 'Edit interval workout' }}</h2>
 
 <mat-dialog-content>
-  <form [formGroup]="form" id="condition-form" (ngSubmit)="save()">
+  <form [formRoot]="form" id="condition-form">
     <div class="row">
       <mat-form-field>
         <mat-label>Date</mat-label>
-        <input matInput type="date" formControlName="date" required />
+        <input matInput type="date" [formField]="form.date" />
       </mat-form-field>
       <mat-form-field>
         <mat-label>Exercise</mat-label>
-        <mat-select formControlName="exerciseType">
+        <mat-select [formField]="form.exerciseType">
           @for (t of exerciseTypes; track t.value) {
             <mat-option [value]="t.value">{{ t.label }}</mat-option>
           }
@@ -19,7 +19,7 @@
 
     <mat-button-toggle-group
       class="mode"
-      formControlName="mode"
+      [formField]="form.mode"
       aria-label="Speed and incline entry"
       (change)="onModeChange($event.value)"
     >
@@ -27,28 +27,25 @@
       <mat-button-toggle value="perInterval">Per interval</mat-button-toggle>
     </mat-button-toggle-group>
 
-    @for (section of [
-      { title: 'Intervals', label: 'Interval', arr: form.controls.intervals },
-      { title: 'Active pauses', label: 'Pause', arr: form.controls.pauses },
-    ]; track section.title) {
+    @for (section of sections; track section.key) {
       <div class="section">
         <div class="section-title">
           {{ section.title }}
-          @if (perInterval) {
-            <span class="avg">Avg {{ avg(section.arr, 'speed') }} km/h · {{ avg(section.arr, 'incline') }} %</span>
+          @if (perInterval()) {
+            <span class="avg">Avg {{ avg(section.key, 'speed') }} km/h · {{ avg(section.key, 'incline') }} %</span>
           }
         </div>
-        @for (g of rows(section.arr); track $index) {
-          <div class="row" [formGroup]="g">
-            @if (perInterval) { <span class="row-label">{{ section.label }} {{ $index + 1 }}</span> }
+        @for (seg of rows(section.key); track $index) {
+          <div class="row">
+            @if (perInterval()) { <span class="row-label">{{ section.label }} {{ $index + 1 }}</span> }
             <mat-form-field>
               <mat-label>Speed</mat-label>
-              <input matInput type="number" inputmode="decimal" min="0" step="0.1" formControlName="speed" />
+              <input matInput type="number" inputmode="decimal" step="0.1" [formField]="seg.speed" />
               <span matTextSuffix>km/h</span>
             </mat-form-field>
             <mat-form-field>
               <mat-label>Incline</mat-label>
-              <input matInput type="number" inputmode="decimal" step="0.5" formControlName="incline" />
+              <input matInput type="number" inputmode="decimal" step="0.5" [formField]="seg.incline" />
               <span matTextSuffix>%</span>
             </mat-form-field>
           </div>
@@ -58,13 +55,13 @@
 
     <mat-form-field class="full">
       <mat-label>Duration</mat-label>
-      <input matInput type="number" inputmode="decimal" min="0" step="0.25" formControlName="durationMin" required />
+      <input matInput type="number" inputmode="decimal" step="0.25" [formField]="form.durationMin" />
       <span matTextSuffix>min</span>
     </mat-form-field>
 
     <mat-form-field class="full">
       <mat-label>Note</mat-label>
-      <textarea matInput rows="3" formControlName="note"></textarea>
+      <textarea matInput rows="3" [formField]="form.note"></textarea>
     </mat-form-field>
   </form>
 </mat-dialog-content>
@@ -75,5 +72,5 @@
   }
   <span class="spacer"></span>
   <button mat-button type="button" mat-dialog-close>Cancel</button>
-  <button mat-flat-button type="submit" form="condition-form" [disabled]="saving()">Save</button>
+  <button mat-flat-button type="submit" form="condition-form" [disabled]="form().submitting()">Save</button>
 </mat-dialog-actions>
