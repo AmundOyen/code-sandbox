@@ -1,0 +1,79 @@
+<h2 mat-dialog-title>{{ data.isNew ? 'Save interval workout' : 'Edit interval workout' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" id="condition-form" (ngSubmit)="save()">
+    <div class="row">
+      <mat-form-field>
+        <mat-label>Date</mat-label>
+        <input matInput type="date" formControlName="date" required />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Exercise</mat-label>
+        <mat-select formControlName="exerciseType">
+          @for (t of exerciseTypes; track t.value) {
+            <mat-option [value]="t.value">{{ t.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-button-toggle-group
+      class="mode"
+      formControlName="mode"
+      aria-label="Speed and incline entry"
+      (change)="onModeChange($event.value)"
+    >
+      <mat-button-toggle value="whole">Whole workout</mat-button-toggle>
+      <mat-button-toggle value="perInterval">Per interval</mat-button-toggle>
+    </mat-button-toggle-group>
+
+    @for (section of [
+      { title: 'Intervals', label: 'Interval', arr: form.controls.intervals },
+      { title: 'Active pauses', label: 'Pause', arr: form.controls.pauses },
+    ]; track section.title) {
+      <div class="section">
+        <div class="section-title">
+          {{ section.title }}
+          @if (perInterval) {
+            <span class="avg">Avg {{ avg(section.arr, 'speed') }} km/h · {{ avg(section.arr, 'incline') }} %</span>
+          }
+        </div>
+        @for (g of rows(section.arr); track $index) {
+          <div class="row" [formGroup]="g">
+            @if (perInterval) { <span class="row-label">{{ section.label }} {{ $index + 1 }}</span> }
+            <mat-form-field>
+              <mat-label>Speed</mat-label>
+              <input matInput type="number" inputmode="decimal" min="0" step="0.1" formControlName="speed" />
+              <span matTextSuffix>km/h</span>
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>Incline</mat-label>
+              <input matInput type="number" inputmode="decimal" step="0.5" formControlName="incline" />
+              <span matTextSuffix>%</span>
+            </mat-form-field>
+          </div>
+        }
+      </div>
+    }
+
+    <mat-form-field class="full">
+      <mat-label>Duration</mat-label>
+      <input matInput type="number" inputmode="decimal" min="0" step="0.25" formControlName="durationMin" required />
+      <span matTextSuffix>min</span>
+    </mat-form-field>
+
+    <mat-form-field class="full">
+      <mat-label>Note</mat-label>
+      <textarea matInput rows="3" formControlName="note"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+  @if (!data.isNew) {
+    <button mat-button type="button" class="delete" (click)="remove()">Delete</button>
+  }
+  <span class="spacer"></span>
+  <button mat-button type="button" mat-dialog-close>Cancel</button>
+  <button mat-flat-button type="submit" form="condition-form" [disabled]="saving()">Save</button>
+</mat-dialog-actions>

@@ -45,11 +45,15 @@
     <div class="done-banner">
       <div class="done-title">Workout Complete!</div>
       <div class="done-sub">All 4 exercises · 16 sets done</div>
+      <button mat-flat-button class="save-btn" (click)="saveWorkout()">
+        <mat-icon>{{ savedWorkout() ? 'edit' : 'save' }}</mat-icon>
+        {{ savedWorkout() ? 'Edit saved workout' : 'Save workout' }}
+      </button>
     </div>
   }
 
   <div class="reset-wrap">
-    <button mat-stroked-button class="reset-btn" (click)="state.resetStrength()">Reset All</button>
+    <button mat-stroked-button class="reset-btn" (click)="resetAll()">Reset All</button>
   </div>
 </div>
 
