@@ -1,4 +1,4 @@
-import { Injectable, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import {
   Exercise,
   PHASES,
@@ -21,6 +21,10 @@ export class WorkoutStateService {
   conditionLeft = signal(PHASES[0].dur);
   conditionRunning = signal(false);
   conditionDone = signal(false);
+  /** Seconds added to each phase via the extend buttons, indexed like PHASES. */
+  conditionExtras = signal<number[]>(PHASES.map(() => 0));
+  conditionExtra = computed(() => this.conditionExtras()[this.conditionIdx()]);
+  conditionExtraTotal = computed(() => this.conditionExtras().reduce((sum, s) => sum + s, 0));
   private condIntervalId: ReturnType<typeof setInterval> | null = null;
 
   // Strength training
@@ -35,6 +39,7 @@ export class WorkoutStateService {
         idx: this.conditionIdx(),
         left: this.conditionLeft(),
         done: this.conditionDone(),
+        extras: this.conditionExtras(),
       };
       const exs = this.exercises();
       const keepAwake = this.wakeLock.enabled();
@@ -108,7 +113,14 @@ export class WorkoutStateService {
     this.stopCondTimer();
     this.conditionIdx.set(0);
     this.conditionLeft.set(PHASES[0].dur);
+    this.conditionExtras.set(PHASES.map(() => 0));
     this.conditionDone.set(false);
+  }
+
+  extendCondition(secs: number): void {
+    this.conditionLeft.update(left => left + secs);
+    const idx = this.conditionIdx();
+    this.conditionExtras.update(extras => extras.map((s, i) => (i === idx ? s + secs : s)));
   }
 
   stopCondTimer(): void {
@@ -204,6 +216,8 @@ export class WorkoutStateService {
         this.conditionIdx.set(idx);
         this.conditionLeft.set(Math.max(0, d.c.left ?? PHASES[idx].dur));
         this.conditionDone.set(Boolean(d.c.done));
+        const extras = d.c.extras;
+        this.conditionExtras.set(PHASES.map((_, i) => Math.max(0, Number(extras?.[i]) || 0)));
       }
     }
     if (d.s?.exercises) {

@@ -91,6 +91,18 @@
   &.cooldown { --mdc-linear-progress-active-indicator-color: var(--orange); }
 }
 
+.extend {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+
+  button {
+    flex: 1;
+    color: var(--green);
+    border-color: rgba(48,209,88,.4);
+  }
+}
+
 .controls {
   display: flex;
   gap: 10px;
