@@ -25,6 +25,13 @@
           />
           <span class="ex-count">{{ ex.sets | doneCount }}/4</span>
         </div>
+        @if (lastFor(ex.name); as last) {
+          <div class="last">
+            <span class="last-label">Last · {{ last.date }}</span>
+            <span class="last-weights">{{ last.weights }}</span>
+            @if (last.note) { <span class="last-note">{{ last.note }}</span> }
+          </div>
+        }
         <div class="sets-grid">
           @for (done of ex.sets; track $index; let si = $index) {
             <button

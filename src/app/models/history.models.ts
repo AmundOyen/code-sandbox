@@ -85,6 +85,12 @@ export function fmtNum(v: number | null): string {
   return v === null ? '–' : String(Math.round(v * 10) / 10);
 }
 
+/** "60 kg" for one weight across all sets, "60 / 60 / 62.5 / 65 kg" per set, "–" when none set. */
+export function fmtWeights(e: StrengthExerciseRecord): string {
+  const list = e.weightMode === 'all' ? e.weights.slice(0, 1) : e.weights;
+  return list.every(w => w === null) ? '–' : `${list.map(fmtNum).join(' / ')} kg`;
+}
+
 export function fmtDate(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString(undefined, {

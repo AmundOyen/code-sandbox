@@ -68,6 +68,19 @@
   flex-shrink: 0;
 }
 
+.last {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 8px;
+  font-size: 12px;
+  margin: -4px 0 10px 38px;
+
+  .last-label { color: var(--muted); }
+  .last-weights { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .last-note { flex-basis: 100%; color: var(--muted); font-style: italic; overflow-wrap: anywhere; }
+}
+
 .sets-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

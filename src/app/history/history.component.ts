@@ -10,13 +10,13 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   ConditionWorkout,
   EXERCISE_TYPES,
-  StrengthExerciseRecord,
   WorkoutRecord,
   average,
   emptyConditionWorkout,
   emptyStrengthWorkout,
   fmtDate,
   fmtNum,
+  fmtWeights,
   normalizeWorkout,
   todayIso,
 } from '../models/history.models';
@@ -79,10 +79,7 @@ export class HistoryComponent implements OnInit {
     return s ? `${m} min ${s} s` : `${m} min`;
   }
 
-  weights(e: StrengthExerciseRecord): string {
-    const list = e.weightMode === 'all' ? e.weights.slice(0, 1) : e.weights;
-    return list.every(w => w === null) ? '–' : `${list.map(fmtNum).join(' / ')} kg`;
-  }
+  readonly fmtWeights = fmtWeights;
 
   // ── Export / import ───────────────────────────────────────────────────────────
 
