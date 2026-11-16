@@ -52,6 +52,14 @@
       [value]="phaseProgress"
     ></mat-progress-bar>
 
+    @if (phase.type === 'pause') {
+      <div class="extend">
+        @for (secs of extendOptions; track secs) {
+          <button mat-stroked-button (click)="state.extendCondition(secs)">+{{ secs }}s</button>
+        }
+      </div>
+    }
+
     <div class="controls">
       <button mat-flat-button class="btn-primary" (click)="state.toggleCondition()">
         {{ btnLabel }}

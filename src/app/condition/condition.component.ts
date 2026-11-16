@@ -33,16 +33,18 @@ export class ConditionComponent implements OnDestroy {
   private router = inject(Router);
 
   readonly phases = PHASES;
+  readonly extendOptions = [15, 30, 60];
 
   get phase() { return PHASES[this.state.conditionIdx()]; }
+  get phaseTotal(): number { return this.phase.dur + this.state.conditionExtra(); }
   get phaseProgress(): number {
-    const p = this.phase;
-    return ((p.dur - this.state.conditionLeft()) / p.dur) * 100;
+    const total = this.phaseTotal;
+    return ((total - this.state.conditionLeft()) / total) * 100;
   }
   get phaseName(): string { return this.state.phaseName(this.state.conditionIdx()); }
   get btnLabel(): string {
     if (this.state.conditionRunning()) return 'Pause';
-    return this.state.conditionLeft() < this.phase.dur ? 'Resume' : 'Start';
+    return this.state.conditionLeft() < this.phaseTotal ? 'Resume' : 'Start';
   }
 
   phaseDisplayName(idx: number): string { return this.state.phaseName(idx); }
