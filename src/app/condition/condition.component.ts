@@ -38,9 +38,17 @@ export class ConditionComponent implements OnDestroy {
 
   get totalDurationLabel(): string {
     const secs = this.baseTotal + this.state.conditionExtraTotal();
+    return secs % 60 ? this.durLabel(secs) : `${secs / 60} minutes`;
+  }
+
+  phaseDurLabel(idx: number): string {
+    return this.durLabel(PHASES[idx].dur + this.state.conditionExtras()[idx]);
+  }
+
+  private durLabel(secs: number): string {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
-    return s ? `${m} min ${s} s` : `${m} minutes`;
+    return s ? `${m} min ${s} s` : `${m} min`;
   }
 
   get phase() { return PHASES[this.state.conditionIdx()]; }

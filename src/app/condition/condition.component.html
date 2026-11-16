@@ -30,7 +30,7 @@
         <div class="pli past">
           <span class="dot" [ngClass]="'past'"></span>
           <span class="pli-label">{{ phaseDisplayName($index) }}</span>
-          <span class="pli-dur">{{ p.dur / 60 }} min</span>
+          <span class="pli-dur">{{ phaseDurLabel($index) }}</span>
         </div>
       }
     </div>
@@ -78,7 +78,7 @@
           [class.past]="i < state.conditionIdx()">
           <span class="dot" [ngClass]="i < state.conditionIdx() ? 'past' : p.type"></span>
           <span class="pli-label">{{ phaseDisplayName(i) }}</span>
-          <span class="pli-dur">{{ p.dur / 60 }} min</span>
+          <span class="pli-dur">{{ phaseDurLabel(i) }}</span>
         </div>
       }
     </div>

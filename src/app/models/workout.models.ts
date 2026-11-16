@@ -24,7 +24,7 @@ export interface RestTimerState {
 }
 
 export interface StoredState {
-  c?: { idx: number; left: number; done: boolean; extra?: number; extraTotal?: number };
+  c?: { idx: number; left: number; done: boolean; extras?: number[] };
   s?: {
     exercises?: Array<{ name: string; sets: boolean[]; restMins: number }>;
     restMins?: number;
