@@ -13,5 +13,9 @@ export const routes: Routes = [
     path: 'strength',
     loadComponent: () => import('./strength/strength.component').then(m => m.StrengthComponent),
   },
+  {
+    path: 'history',
+    loadComponent: () => import('./history/history.component').then(m => m.HistoryComponent),
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -114,6 +114,12 @@
     color: #fff;
   }
 
+  .btn-save {
+    flex: 1;
+    background: var(--green);
+    color: #000;
+  }
+
   .btn-reset {
     color: var(--red);
     background: rgba(255,59,92,.14);

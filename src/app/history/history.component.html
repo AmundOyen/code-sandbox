@@ -1,0 +1,54 @@
+<mat-toolbar class="toolbar">
+  <button mat-button class="back-btn" (click)="goBack()">
+    <mat-icon>arrow_back_ios</mat-icon> Back
+  </button>
+  <span class="toolbar-title">History</span>
+  <button mat-icon-button [matMenuTriggerFor]="moreMenu" aria-label="Export or import">
+    <mat-icon>more_vert</mat-icon>
+  </button>
+  <mat-menu #moreMenu="matMenu" xPosition="before">
+    <button mat-menu-item (click)="exportJson()" [disabled]="!db.workouts().length">
+      <mat-icon>download</mat-icon> Export JSON
+    </button>
+    <button mat-menu-item (click)="fileInput.click()">
+      <mat-icon>upload</mat-icon> Import JSON
+    </button>
+  </mat-menu>
+  <input #fileInput type="file" accept="application/json,.json" hidden (change)="importJson(fileInput)" />
+</mat-toolbar>
+
+<div class="screen">
+  <div class="add">
+    <button mat-stroked-button class="add-cond" (click)="addCondition()">
+      <mat-icon>add</mat-icon> Interval
+    </button>
+    <button mat-stroked-button class="add-str" (click)="addStrength()">
+      <mat-icon>add</mat-icon> Strength
+    </button>
+  </div>
+
+  @for (w of db.workouts(); track w.id) {
+    <mat-card class="item" [class]="w.kind" matRipple (click)="edit(w)">
+      <mat-card-content>
+        <div class="item-hdr">
+          <span class="item-date">{{ fmtDate(w.date) }}</span>
+          <span class="item-kind">{{ w.kind === 'condition' ? 'Interval' : 'Strength' }}</span>
+        </div>
+
+        @if (w.kind === 'condition') {
+          <div class="line"><span>{{ exerciseLabel(w) }}</span><span>{{ duration(w) }}</span></div>
+          <div class="line"><span>Intervals</span><span>{{ segmentSummary(w, 'intervals') }}</span></div>
+          <div class="line"><span>Pauses</span><span>{{ segmentSummary(w, 'pauses') }}</span></div>
+          @if (w.note) { <div class="note">{{ w.note }}</div> }
+        } @else {
+          @for (e of w.exercises; track $index) {
+            <div class="line"><span>{{ e.name || 'Exercise ' + ($index + 1) }}</span><span>{{ weights(e) }}</span></div>
+            @if (e.note) { <div class="note">{{ e.note }}</div> }
+          }
+        }
+      </mat-card-content>
+    </mat-card>
+  } @empty {
+    <div class="empty">No workouts yet. Save one from a finished workout, or add one above.</div>
+  }
+</div>

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -7,10 +7,13 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { WorkoutStateService } from '../services/workout-state.service';
 import { WakeLockService } from '../services/wake-lock.service';
 import { PHASES } from '../models/workout.models';
 import { PhaseLabelPipe } from '../models/phase-label.pipe';
+import { ConditionWorkout, emptyConditionWorkout } from '../models/history.models';
+import { WorkoutDialogService } from '../history/workout-dialog.service';
 
 @Component({
   selector: 'app-condition',
@@ -31,6 +34,11 @@ export class ConditionComponent implements OnDestroy {
   readonly state = inject(WorkoutStateService);
   readonly wakeLock = inject(WakeLockService);
   private router = inject(Router);
+  private dialogs = inject(WorkoutDialogService);
+  private snackBar = inject(MatSnackBar);
+
+  /** The record saved from this done screen, so a second tap edits it instead of duplicating. */
+  readonly savedWorkout = signal<ConditionWorkout | null>(null);
 
   readonly phases = PHASES;
   readonly extendOptions = [15, 30, 60];
@@ -72,6 +80,29 @@ export class ConditionComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.state.stopCondTimer();
+  }
+
+  async saveWorkout(): Promise<void> {
+    const existing = this.savedWorkout();
+    const workout = existing ?? {
+      ...emptyConditionWorkout(),
+      durationSec: this.baseTotal + this.state.conditionExtraTotal(),
+    };
+    const result = await this.dialogs.open(workout, !existing);
+    if (result === 'deleted') {
+      this.savedWorkout.set(null);
+    } else if (result) {
+      this.savedWorkout.set(result);
+      this.snackBar
+        .open('Workout saved', 'History', { duration: 4000 })
+        .onAction()
+        .subscribe(() => this.router.navigate(['/history']));
+    }
+  }
+
+  startAgain(): void {
+    this.savedWorkout.set(null);
+    this.state.resetCondition();
   }
 
   onWakeToggle(checked: boolean): void {

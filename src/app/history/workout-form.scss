@@ -1,0 +1,59 @@
+// Shared by the interval and strength workout dialogs.
+
+form {
+  display: flex;
+  flex-direction: column;
+  padding-top: 8px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  mat-form-field { flex: 1; min-width: 0; }
+}
+
+.row-label {
+  width: 72px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--muted);
+  padding-bottom: 20px;
+}
+
+.full { width: 100%; }
+
+.mode { margin-bottom: 16px; align-self: flex-start; }
+
+.section {
+  margin-bottom: 8px;
+}
+
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.avg {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 12px 0;
+  margin-bottom: 12px;
+}
+
+.spacer { flex: 1; }
+
+.delete { color: var(--red); }

@@ -23,7 +23,11 @@
     </div>
     <div class="timer green">00:00</div>
     <div class="controls">
-      <button mat-flat-button class="btn-primary" (click)="state.resetCondition()">Start Again</button>
+      <button mat-flat-button class="btn-save" (click)="saveWorkout()">
+        <mat-icon>{{ savedWorkout() ? 'edit' : 'save' }}</mat-icon>
+        {{ savedWorkout() ? 'Edit saved workout' : 'Save workout' }}
+      </button>
+      <button mat-stroked-button (click)="startAgain()">Start Again</button>
     </div>
     <div class="phase-list">
       @for (p of phases; track p.label + p.round) {
