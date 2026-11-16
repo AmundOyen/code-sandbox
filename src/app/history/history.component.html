@@ -42,7 +42,7 @@
           @if (w.note) { <div class="note">{{ w.note }}</div> }
         } @else {
           @for (e of w.exercises; track $index) {
-            <div class="line"><span>{{ e.name || 'Exercise ' + ($index + 1) }}</span><span>{{ weights(e) }}</span></div>
+            <div class="line"><span>{{ e.name || 'Exercise ' + ($index + 1) }}</span><span>{{ fmtWeights(e) }}</span></div>
             @if (e.note) { <div class="note">{{ e.note }}</div> }
           }
         }

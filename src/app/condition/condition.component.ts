@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -12,7 +12,8 @@ import { WorkoutStateService } from '../services/workout-state.service';
 import { WakeLockService } from '../services/wake-lock.service';
 import { PHASES } from '../models/workout.models';
 import { PhaseLabelPipe } from '../models/phase-label.pipe';
-import { ConditionWorkout, emptyConditionWorkout } from '../models/history.models';
+import { ConditionWorkout, emptyConditionWorkout, fmtDate, fmtNum } from '../models/history.models';
+import { WorkoutDbService } from '../services/workout-db.service';
 import { WorkoutDialogService } from '../history/workout-dialog.service';
 
 @Component({
@@ -36,11 +37,38 @@ export class ConditionComponent implements OnDestroy {
   private router = inject(Router);
   private dialogs = inject(WorkoutDialogService);
   private snackBar = inject(MatSnackBar);
+  private db = inject(WorkoutDbService);
 
   /** The record saved from this done screen, so a second tap edits it instead of duplicating. */
   readonly savedWorkout = signal<ConditionWorkout | null>(null);
 
   readonly phases = PHASES;
+
+  /** Most recent saved interval workout, to help set up the treadmill. */
+  readonly lastWorkout = computed(
+    () => this.db.workouts().find((w): w is ConditionWorkout => w.kind === 'condition') ?? null,
+  );
+  readonly lastDate = computed(() => {
+    const w = this.lastWorkout();
+    return w ? fmtDate(w.date) : '';
+  });
+  /** Last time's speed/incline for the current phase and the next one (null for warm-up/cool-down). */
+  readonly lastStats = computed(() => {
+    const idx = this.state.conditionIdx();
+    return [
+      { label: 'Now', idx },
+      { label: 'Next', idx: idx + 1 },
+    ].flatMap(({ label, idx }) => {
+      const stats = this.lastStatsFor(idx);
+      return stats ? [{ label, ...stats }] : [];
+    });
+  });
+
+  constructor() {
+    this.db.load().catch(() => {
+      // No history available; the screen works without it.
+    });
+  }
   readonly extendOptions = [15, 30, 60];
   private readonly baseTotal = PHASES.reduce((sum, p) => sum + p.dur, 0);
 
@@ -51,6 +79,18 @@ export class ConditionComponent implements OnDestroy {
 
   phaseDurLabel(idx: number): string {
     return this.durLabel(PHASES[idx].dur + this.state.conditionExtras()[idx]);
+  }
+
+  private lastStatsFor(idx: number): { name: string; value: string } | null {
+    const w = this.lastWorkout();
+    const p = PHASES[idx];
+    if (!w || !p?.round || (p.type !== 'interval' && p.type !== 'pause')) return null;
+    const seg = (p.type === 'interval' ? w.intervals : w.pauses)[p.round - 1];
+    if (!seg || (seg.speed === null && seg.incline === null)) return null;
+    return {
+      name: this.state.phaseName(idx),
+      value: `${fmtNum(seg.speed)} km/h · ${fmtNum(seg.incline)} %`,
+    };
   }
 
   private durLabel(secs: number): string {

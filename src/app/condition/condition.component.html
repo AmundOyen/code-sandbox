@@ -59,6 +59,18 @@
       [value]="phaseProgress"
     ></mat-progress-bar>
 
+    @if (lastStats().length) {
+      <div class="last-time">
+        <div class="last-title">Last time · {{ lastDate() }}</div>
+        @for (row of lastStats(); track row.label) {
+          <div class="last-row">
+            <span class="last-label">{{ row.label }} <span class="last-phase">{{ row.name }}</span></span>
+            <span class="last-value">{{ row.value }}</span>
+          </div>
+        }
+      </div>
+    }
+
     @if (phase.type === 'pause') {
       <div class="extend">
         @for (secs of extendOptions; track secs) {
