@@ -34,6 +34,14 @@ export class ConditionComponent implements OnDestroy {
 
   readonly phases = PHASES;
   readonly extendOptions = [15, 30, 60];
+  private readonly baseTotal = PHASES.reduce((sum, p) => sum + p.dur, 0);
+
+  get totalDurationLabel(): string {
+    const secs = this.baseTotal + this.state.conditionExtraTotal();
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return s ? `${m} min ${s} s` : `${m} minutes`;
+  }
 
   get phase() { return PHASES[this.state.conditionIdx()]; }
   get phaseTotal(): number { return this.phase.dur + this.state.conditionExtra(); }

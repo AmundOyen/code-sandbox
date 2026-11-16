@@ -16,7 +16,10 @@
     <div class="phase-info">
       <span class="badge done">Done</span>
       <div class="phase-name">Workout Complete!</div>
-      <div class="phase-sub">34 minutes · Great work</div>
+      <div class="phase-sub">{{ totalDurationLabel }} · Great work</div>
+      @if (state.conditionExtraTotal() > 0) {
+        <div class="phase-sub">Includes {{ state.fmt(state.conditionExtraTotal()) }} of added rest</div>
+      }
     </div>
     <div class="timer green">00:00</div>
     <div class="controls">

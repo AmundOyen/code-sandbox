@@ -23,6 +23,8 @@ export class WorkoutStateService {
   conditionDone = signal(false);
   /** Seconds added to the current phase via the extend buttons. */
   conditionExtra = signal(0);
+  /** Seconds added across the whole workout, shown on the done screen. */
+  conditionExtraTotal = signal(0);
   private condIntervalId: ReturnType<typeof setInterval> | null = null;
 
   // Strength training
@@ -38,6 +40,7 @@ export class WorkoutStateService {
         left: this.conditionLeft(),
         done: this.conditionDone(),
         extra: this.conditionExtra(),
+        extraTotal: this.conditionExtraTotal(),
       };
       const exs = this.exercises();
       const keepAwake = this.wakeLock.enabled();
@@ -114,12 +117,14 @@ export class WorkoutStateService {
     this.conditionIdx.set(0);
     this.conditionLeft.set(PHASES[0].dur);
     this.conditionExtra.set(0);
+    this.conditionExtraTotal.set(0);
     this.conditionDone.set(false);
   }
 
   extendCondition(secs: number): void {
     this.conditionLeft.update(left => left + secs);
     this.conditionExtra.update(extra => extra + secs);
+    this.conditionExtraTotal.update(total => total + secs);
   }
 
   stopCondTimer(): void {
@@ -216,6 +221,7 @@ export class WorkoutStateService {
         this.conditionLeft.set(Math.max(0, d.c.left ?? PHASES[idx].dur));
         this.conditionDone.set(Boolean(d.c.done));
         this.conditionExtra.set(Math.max(0, Number(d.c.extra) || 0));
+        this.conditionExtraTotal.set(Math.max(0, Number(d.c.extraTotal) || 0));
       }
     }
     if (d.s?.exercises) {
