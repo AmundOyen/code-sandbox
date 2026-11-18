@@ -101,31 +101,70 @@ export function fmtDate(iso: string): string {
   });
 }
 
-export function emptyConditionWorkout(): ConditionWorkout {
+// ── Previous workouts ──────────────────────────────────────────────────────────
+// `history` is expected newest first, as WorkoutDbService.workouts() provides it.
+
+/** The most recent saved interval workout. */
+export function latestCondition(history: WorkoutRecord[]): ConditionWorkout | null {
+  return history.find((w): w is ConditionWorkout => w.kind === 'condition') ?? null;
+}
+
+/** Key used to match strength exercises by name: case-insensitive, ignoring surrounding spaces. */
+export function exerciseKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+/**
+ * The most recent saved entry per exercise name that has at least one weight set,
+ * keyed by exerciseKey().
+ */
+export function latestExercises(
+  history: WorkoutRecord[],
+): Map<string, { date: string; exercise: StrengthExerciseRecord }> {
+  const map = new Map<string, { date: string; exercise: StrengthExerciseRecord }>();
+  for (const w of history) {
+    if (w.kind !== 'strength') continue;
+    for (const exercise of w.exercises) {
+      const key = exerciseKey(exercise.name);
+      if (!key || map.has(key) || exercise.weights.every(x => x === null)) continue;
+      map.set(key, { date: w.date, exercise });
+    }
+  }
+  return map;
+}
+
+/** A new interval workout for today, with speed/incline copied from the latest saved one. */
+export function newConditionWorkout(history: WorkoutRecord[]): ConditionWorkout {
+  const prev = latestCondition(history);
   return {
     id: newId(),
     kind: 'condition',
     date: todayIso(),
-    exerciseType: 'treadmill',
-    mode: 'whole',
-    intervals: Array.from({ length: INTERVAL_COUNT }, emptySegment),
-    pauses: Array.from({ length: PAUSE_COUNT }, emptySegment),
+    exerciseType: prev?.exerciseType ?? 'treadmill',
+    mode: prev?.mode ?? 'whole',
+    intervals: copySegments(prev?.intervals, INTERVAL_COUNT),
+    pauses: copySegments(prev?.pauses, PAUSE_COUNT),
     durationSec: BASE_CONDITION_SECS,
     note: '',
   };
 }
 
-export function emptyStrengthWorkout(names: string[]): StrengthWorkout {
+/** A new strength workout for today, with each exercise's weights copied from its latest saved entry. */
+export function newStrengthWorkout(names: string[], history: WorkoutRecord[]): StrengthWorkout {
+  const latest = latestExercises(history);
   return {
     id: newId(),
     kind: 'strength',
     date: todayIso(),
-    exercises: names.map(name => ({
-      name,
-      weightMode: 'all',
-      weights: Array<number | null>(SET_COUNT).fill(null),
-      note: '',
-    })),
+    exercises: names.map(name => {
+      const prev = latest.get(exerciseKey(name))?.exercise;
+      return {
+        name,
+        weightMode: prev?.weightMode ?? 'all',
+        weights: Array.from({ length: SET_COUNT }, (_, i) => prev?.weights[i] ?? null),
+        note: '',
+      };
+    }),
   };
 }
 
@@ -172,6 +211,14 @@ export function normalizeWorkout(raw: unknown): WorkoutRecord | null {
 
 function emptySegment(): TreadmillSegment {
   return { speed: null, incline: null };
+}
+
+/** Copies segments field by field into fresh objects (see copySegment in the interval form). */
+function copySegments(list: TreadmillSegment[] | undefined, count: number): TreadmillSegment[] {
+  return Array.from({ length: count }, (_, i) => {
+    const s = list?.[i];
+    return s ? { speed: s.speed, incline: s.incline } : emptySegment();
+  });
 }
 
 function segments(raw: unknown, count: number): TreadmillSegment[] {

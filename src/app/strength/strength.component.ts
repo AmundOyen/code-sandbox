@@ -12,7 +12,14 @@ import { WorkoutStateService } from '../services/workout-state.service';
 import { WakeLockService } from '../services/wake-lock.service';
 import { RestTimerComponent } from './rest-timer/rest-timer.component';
 import { DoneCountPipe } from '../models/done-count.pipe';
-import { StrengthWorkout, emptyStrengthWorkout, fmtDate, fmtWeights } from '../models/history.models';
+import {
+  StrengthWorkout,
+  exerciseKey,
+  fmtDate,
+  fmtWeights,
+  latestExercises,
+  newStrengthWorkout,
+} from '../models/history.models';
 import { WorkoutDbService } from '../services/workout-db.service';
 import { WorkoutDialogService } from '../history/workout-dialog.service';
 
@@ -45,18 +52,7 @@ export class StrengthComponent implements OnDestroy {
   private db = inject(WorkoutDbService);
 
   /** Latest saved weights per exercise name (case-insensitive), to help set up the machine. */
-  private readonly lastByName = computed(() => {
-    const map = new Map<string, { date: string; weights: string; note: string }>();
-    for (const w of this.db.workouts()) {
-      if (w.kind !== 'strength') continue;
-      for (const e of w.exercises) {
-        const key = nameKey(e.name);
-        if (!key || map.has(key) || e.weights.every(x => x === null)) continue;
-        map.set(key, { date: fmtDate(w.date), weights: fmtWeights(e), note: e.note });
-      }
-    }
-    return map;
-  });
+  private readonly lastByName = computed(() => latestExercises(this.db.workouts()));
 
   constructor() {
     this.db.load().catch(() => {
@@ -64,8 +60,11 @@ export class StrengthComponent implements OnDestroy {
     });
   }
 
-  lastFor(name: string) {
-    return this.lastByName().get(nameKey(name)) ?? null;
+  lastFor(name: string): { date: string; weights: string; note: string } | null {
+    const last = this.lastByName().get(exerciseKey(name));
+    return last
+      ? { date: fmtDate(last.date), weights: fmtWeights(last.exercise), note: last.exercise.note }
+      : null;
   }
 
   get exercises() { return this.state.exercises(); }
@@ -89,7 +88,7 @@ export class StrengthComponent implements OnDestroy {
 
   async saveWorkout(): Promise<void> {
     const existing = this.savedWorkout();
-    const workout = existing ?? emptyStrengthWorkout(this.exercises.map(e => e.name));
+    const workout = existing ?? newStrengthWorkout(this.exercises.map(e => e.name), this.db.workouts());
     const result = await this.dialogs.open(workout, !existing);
     if (result === 'deleted') {
       this.savedWorkout.set(null);
@@ -112,8 +111,4 @@ export class StrengthComponent implements OnDestroy {
   }
 
   trackByIndex(index: number): number { return index; }
-}
-
-function nameKey(name: string): string {
-  return name.trim().toLowerCase();
 }
