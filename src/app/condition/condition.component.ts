@@ -12,7 +12,7 @@ import { WorkoutStateService } from '../services/workout-state.service';
 import { WakeLockService } from '../services/wake-lock.service';
 import { PHASES } from '../models/workout.models';
 import { PhaseLabelPipe } from '../models/phase-label.pipe';
-import { ConditionWorkout, emptyConditionWorkout, fmtDate, fmtNum } from '../models/history.models';
+import { ConditionWorkout, fmtDate, fmtNum, latestCondition, newConditionWorkout } from '../models/history.models';
 import { WorkoutDbService } from '../services/workout-db.service';
 import { WorkoutDialogService } from '../history/workout-dialog.service';
 
@@ -45,9 +45,7 @@ export class ConditionComponent implements OnDestroy {
   readonly phases = PHASES;
 
   /** Most recent saved interval workout, to help set up the treadmill. */
-  readonly lastWorkout = computed(
-    () => this.db.workouts().find((w): w is ConditionWorkout => w.kind === 'condition') ?? null,
-  );
+  readonly lastWorkout = computed(() => latestCondition(this.db.workouts()));
   readonly lastDate = computed(() => {
     const w = this.lastWorkout();
     return w ? fmtDate(w.date) : '';
@@ -125,7 +123,7 @@ export class ConditionComponent implements OnDestroy {
   async saveWorkout(): Promise<void> {
     const existing = this.savedWorkout();
     const workout = existing ?? {
-      ...emptyConditionWorkout(),
+      ...newConditionWorkout(this.db.workouts()),
       durationSec: this.baseTotal + this.state.conditionExtraTotal(),
     };
     const result = await this.dialogs.open(workout, !existing);

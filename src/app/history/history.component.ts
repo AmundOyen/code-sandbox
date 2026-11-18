@@ -12,8 +12,8 @@ import {
   EXERCISE_TYPES,
   WorkoutRecord,
   average,
-  emptyConditionWorkout,
-  emptyStrengthWorkout,
+  newConditionWorkout,
+  newStrengthWorkout,
   fmtDate,
   fmtNum,
   fmtWeights,
@@ -52,11 +52,11 @@ export class HistoryComponent implements OnInit {
   }
 
   addCondition(): void {
-    this.dialogs.open(emptyConditionWorkout(), true);
+    this.dialogs.open(newConditionWorkout(this.db.workouts()), true);
   }
 
   addStrength(): void {
-    this.dialogs.open(emptyStrengthWorkout(this.state.exercises().map(e => e.name)), true);
+    this.dialogs.open(newStrengthWorkout(this.state.exercises().map(e => e.name), this.db.workouts()), true);
   }
 
   // ── Summaries ─────────────────────────────────────────────────────────────────
